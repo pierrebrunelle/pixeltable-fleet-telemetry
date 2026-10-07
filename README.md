@@ -18,7 +18,7 @@ Ingest vehicle telemetry (speed, engine temperature, fuel) and query it fast. Re
 - **Incremental computed columns** powered by plain Python UDFs (`@pxt.udf`)
 - **Reads and writes**: Json columns, primary-key updates and deletes, and quick inspection with the `pxt` CLI (`pxt rows`, `pxt get`, `pxt count`)
 - **FastAPI serving**: one `FastAPIRouter` turns tables and `@pxt.query` functions into typed REST routes (insert, update, delete, compute and query) with OpenAPI docs
-- **Importable UDF module**: UDFs in `udfs.py`, tables in `models.py`, queries in `queries.py`, routes in `app.py` (Pixeltable resolves UDFs by module path)
+- **Importable UDF module**: UDFs live in `udfs.py`; tables, queries and routes live together in `app.py` (Pixeltable resolves UDFs by module path)
 - **`pixeltable.toml`** declares a local database and a **Pixeltable Cloud** database, so the same code deploys with `pxt db update`
 
 ## Indexes are part of the model
@@ -40,13 +40,11 @@ class Readings(TableModel, name='readings', has_default_idxs=False):
 
 | File | What it is |
 |------|------------|
-| `app.py` | The API: one `FastAPIRouter` wiring the tables and queries into REST routes |
+| `app.py` | The app: tables declared as Python classes, `@pxt.query` functions, and the `FastAPIRouter` routes |
 | `client_demo.py` | Score, ingest, correct and query telemetry readings through the API |
-| `models.py` | Tables declared as Python classes: columns, computed columns, indexes |
 | `pixeltable.toml` | Project config: the local database plus a Pixeltable Cloud database (sizing, deploy excludes) |
-| `queries.py` | `@pxt.query` functions served as query routes |
 | `seed.py` | Seed 60 synthetic readings for 6 vehicles in 2 fleets |
-| `udfs.py` | Pixeltable UDFs (`@pxt.udf`) in their own importable module |
+| `udfs.py` | Pixeltable UDFs (`@pxt.udf`) in their own importable module, imported by `app.py` |
 | `requirements.txt` / `pyproject.toml` | Dependencies (`pixeltable[serve]>=0.7.14`) |
 
 **Tables**
@@ -125,10 +123,10 @@ def severity_score(speed_kph: float, engine_temp_c: float, fuel_pct: float | Non
     return min(score, 100)
 ```
 
-**2. Tables are Python classes (`models.py`).** Annotated attributes are stored columns; attributes assigned an expression are **computed columns** (`id`, `severity`, `alert`, `tag`), evaluated incrementally on every insert or update and recomputed when their inputs change. Indexes live next to the columns.
+**2. Tables are Python classes (`app.py`).** Annotated attributes are stored columns; attributes assigned an expression are **computed columns** (`id`, `severity`, `alert`, `tag`), evaluated incrementally on every insert or update and recomputed when their inputs change. Indexes live next to the columns.
 
 ```python
-# models.py
+# app.py
 class Readings(TableModel, name='readings', has_default_idxs=False):
     id = pxt.Column(value=pxtf.uuid.uuid7(), primary_key=True)
     vehicle_id: pxt.String
@@ -147,10 +145,10 @@ class Readings(TableModel, name='readings', has_default_idxs=False):
                    pxt.BtreeIndex(status), pxt.BtreeIndex(recorded_at)]
 ```
 
-**3. Queries are functions (`queries.py`).** `@pxt.query` wraps a Pixeltable query so it can be called from Python or exposed as a route:
+**3. Queries are functions (`app.py`).** `@pxt.query` wraps a Pixeltable query so it can be called from Python or exposed as a route:
 
 ```python
-# queries.py
+# app.py
 @pxt.query
 def vehicle_history(vehicle_id: str):
     """All readings for one vehicle, newest first (uses the vehicle_id index)."""
