@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use or adapt this example app, please cite it using these metadata."
+type: software
+title: "Fleet Telemetry API built with Pixeltable"
+abstract: "Fleet telemetry API with B-tree indexed lookups and a chained severity/alert UDF pipeline."
+authors:
+  - given-names: "Pierre"
+    family-names: "Brunelle"
+repository-code: "https://github.com/pierrebrunelle/pixeltable-fleet-telemetry"
+url: "https://pierrebrunelle.github.io/awesome-pixeltable-apps/"
+license: Apache-2.0
+version: "0.1.0"
+date-released: 2026-10-07
+keywords:
+  - "pixeltable"
+  - "pixeltable-example"
+  - "python"
+  - "database-indexing"
+  - "iot"
+  - "telemetry"
+  - "udf"
+  - "database"
+  - "fastapi"
+  - "multimodal"
